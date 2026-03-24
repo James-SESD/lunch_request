@@ -1,0 +1,877 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Spigen Lunch Automation — Setup Guide</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --blue: #1F5C99;
+    --blue-dark: #163F6B;
+    --blue-light: #D6E4F0;
+    --blue-mid: #2A7EC8;
+    --green: #2E7D32;
+    --green-light: #E8F5E9;
+    --orange: #E65100;
+    --orange-light: #FFF3E0;
+    --bg: #F0F4F8;
+    --surface: #ffffff;
+    --text: #1A1A2E;
+    --text-muted: #556;
+    --border: #DDE5EE;
+    --mono: 'DM Mono', monospace;
+    --sans: 'DM Sans', sans-serif;
+    --radius: 14px;
+    --shadow: 0 2px 16px rgba(31,92,153,0.10);
+  }
+
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    padding: 36px 20px 80px;
+    min-height: 100vh;
+  }
+
+  .page { max-width: 860px; margin: 0 auto; }
+
+  /* ── PROGRESS BAR ── */
+  .progress-bar {
+    background: var(--surface);
+    border-radius: 50px;
+    padding: 10px 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 28px;
+    box-shadow: var(--shadow);
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .progress-bar::-webkit-scrollbar { display: none; }
+  .progress-step {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 20px;
+    transition: background 0.2s;
+  }
+  .progress-step:hover { background: var(--blue-light); }
+  .progress-step .dot {
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    background: var(--border);
+    color: var(--text-muted);
+    font-size: 11px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s;
+    flex-shrink: 0;
+  }
+  .progress-step.done .dot { background: var(--green); color: #fff; }
+  .progress-step.active .dot { background: var(--blue); color: #fff; box-shadow: 0 0 0 3px var(--blue-light); }
+  .progress-step .label { font-size: 12px; color: var(--text-muted); font-weight: 500; }
+  .progress-step.active .label { color: var(--blue); font-weight: 600; }
+  .progress-sep { color: var(--border); font-size: 14px; flex-shrink: 0; }
+
+  /* ── HEADER ── */
+  .header {
+    background: linear-gradient(135deg, var(--blue-dark) 0%, var(--blue-mid) 100%);
+    border-radius: var(--radius);
+    padding: 32px 36px;
+    color: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 28px;
+    box-shadow: 0 6px 28px rgba(31,92,153,0.35);
+    position: relative;
+    overflow: hidden;
+  }
+  .header::before {
+    content: '';
+    position: absolute;
+    top: -40px; right: -40px;
+    width: 200px; height: 200px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.05);
+  }
+  .header-left h1 {
+    font-size: 26px; font-weight: 600; margin-bottom: 6px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .header-left p { font-size: 14px; opacity: 0.82; }
+  .header-right { text-align: right; font-size: 13px; opacity: 0.75; line-height: 2; }
+  .header-right strong { opacity: 1; display: block; font-size: 15px; }
+
+  /* ── COMMAND BOX ── */
+  .command-box {
+    background: #0D1117;
+    border-radius: 12px;
+    padding: 20px 24px;
+    text-align: center;
+    margin: 16px 0 8px;
+    border: 1px solid #30363D;
+    position: relative;
+  }
+  .command-box code {
+    font-size: 22px; color: #00CC66;
+    font-family: var(--mono); font-weight: 500;
+    letter-spacing: 0.5px;
+  }
+  .copy-btn {
+    position: absolute; top: 10px; right: 12px;
+    background: #21262D; border: 1px solid #30363D;
+    color: #8B949E; border-radius: 6px;
+    padding: 4px 10px; font-size: 11px; font-family: var(--sans);
+    cursor: pointer; transition: all 0.2s;
+  }
+  .copy-btn:hover { background: #30363D; color: #fff; }
+  .copy-btn.copied { background: #1a7f37; border-color: #1a7f37; color: #fff; }
+
+  .intro-text { font-size: 14px; color: var(--text-muted); line-height: 1.6; margin-bottom: 28px; }
+
+  /* ── STEP CARD ── */
+  .step-card {
+    background: var(--surface);
+    border-radius: var(--radius);
+    margin-bottom: 20px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    transition: box-shadow 0.2s;
+    scroll-margin-top: 20px;
+  }
+  .step-card:hover { box-shadow: 0 4px 24px rgba(31,92,153,0.14); }
+  .step-card.done .step-header { background: var(--green); }
+
+  .step-header {
+    background: var(--blue);
+    padding: 16px 24px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    cursor: pointer;
+    user-select: none;
+  }
+  .step-num {
+    background: rgba(255,255,255,0.18);
+    color: white;
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 15px; flex-shrink: 0;
+    transition: all 0.3s;
+  }
+  .step-card.done .step-num { background: rgba(255,255,255,0.3); }
+  .step-num.check::after { content: "✓"; }
+  .step-header-text { flex: 1; }
+  .step-header-text h2 { color: white; font-size: 17px; font-weight: 600; margin-bottom: 2px; }
+  .step-header-text p { color: rgba(255,255,255,0.72); font-size: 12.5px; }
+  .step-collapse-btn {
+    color: rgba(255,255,255,0.7);
+    font-size: 18px;
+    transition: transform 0.3s;
+    flex-shrink: 0;
+  }
+  .step-card.collapsed .step-collapse-btn { transform: rotate(-90deg); }
+  .step-done-btn {
+    background: rgba(255,255,255,0.2);
+    border: 1px solid rgba(255,255,255,0.4);
+    color: white;
+    border-radius: 20px;
+    padding: 4px 12px;
+    font-size: 12px;
+    font-family: var(--sans);
+    cursor: pointer;
+    transition: all 0.2s;
+    flex-shrink: 0;
+  }
+  .step-done-btn:hover { background: rgba(255,255,255,0.35); }
+  .step-card.done .step-done-btn { background: rgba(255,255,255,0.3); }
+
+  .step-body { padding: 22px 24px; }
+  .step-card.collapsed .step-body { display: none; }
+
+  /* ── INSTRUCTIONS ── */
+  .instructions { list-style: none; counter-reset: inst; }
+  .instructions li {
+    counter-increment: inst;
+    display: flex; gap: 14px;
+    margin-bottom: 14px;
+    align-items: flex-start;
+    font-size: 14.5px; line-height: 1.55;
+  }
+  .instructions li::before {
+    content: counter(inst);
+    background: var(--blue); color: white;
+    width: 24px; height: 24px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700;
+    flex-shrink: 0; margin-top: 1px;
+  }
+
+  /* ── NOTES ── */
+  .note {
+    background: var(--orange-light);
+    border-left: 4px solid var(--orange);
+    border-radius: 0 8px 8px 0;
+    padding: 12px 16px;
+    font-size: 13.5px; color: #BF360C;
+    margin-top: 16px; line-height: 1.5;
+  }
+  .note-blue { background: var(--blue-light); border-left-color: var(--blue); color: #0D47A1; }
+  .note-green { background: var(--green-light); border-left-color: var(--green); color: #1B5E20; }
+
+  /* ── CODE BLOCK ── */
+  .code-block {
+    background: #F8F8F8; border: 1px solid var(--border);
+    border-radius: 8px; padding: 14px 16px; margin: 14px 0;
+    font-family: var(--mono); font-size: 13px;
+    position: relative;
+  }
+  .code-block .line { display: flex; gap: 12px; margin-bottom: 5px; }
+  .code-block .line:last-child { margin-bottom: 0; }
+  .code-key { color: #1565C0; font-weight: 600; min-width: 180px; }
+  .code-val { color: #C7254E; }
+  .code-val.placeholder { color: #999; font-style: italic; }
+
+  /* ── EDITABLE FIELDS ── */
+  .editable-field {
+    background: white;
+    border: 1.5px solid var(--blue-light);
+    border-radius: 6px;
+    padding: 4px 8px;
+    font-family: var(--mono);
+    font-size: 12.5px;
+    color: #C7254E;
+    outline: none;
+    transition: border-color 0.2s;
+    min-width: 200px;
+  }
+  .editable-field:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(31,92,153,0.12); }
+  .editable-field.filled { border-color: #66BB6A; background: #F1F8F1; }
+  .editable-hint { font-size: 11px; color: #999; font-style: italic; }
+
+  /* ── TABLES ── */
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; margin: 14px 0; }
+  th { background: var(--blue); color: white; padding: 10px 14px; text-align: left; font-weight: 600; }
+  th:first-child { border-radius: 8px 0 0 0; }
+  th:last-child { border-radius: 0 8px 0 0; }
+  td { padding: 9px 14px; border-bottom: 1px solid #F0F0F0; }
+  tr:last-child td { border-bottom: none; }
+  tr:nth-child(even) td { background: #F8F8F8; }
+  .mono { font-family: var(--mono); color: #C7254E; font-size: 12.5px; }
+
+  /* ── CLICKABLE CARRIER ROWS ── */
+  .carrier-row { cursor: pointer; transition: background 0.15s; }
+  .carrier-row:hover td { background: #EBF3FF !important; }
+  .carrier-row.selected td { background: #D6E4F0 !important; }
+  .carrier-row td:last-child { font-size: 12px; }
+  .carrier-select-badge {
+    display: inline-block;
+    background: var(--blue); color: white;
+    border-radius: 10px; padding: 1px 8px;
+    font-size: 10px; font-weight: 700;
+    margin-left: 6px;
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+  .carrier-row.selected .carrier-select-badge { opacity: 1; }
+
+  /* ── SCHEDULE TABLE ── */
+  .sched-table th { background: var(--blue); }
+  .sched-table td:first-child { font-weight: 600; color: var(--blue); }
+  .sched-prompt { font-family: var(--mono); color: #C7254E; font-size: 12.5px; }
+
+  /* ── CLAUDE PROMPT BOX ── */
+  .claude-prompt {
+    background: #0D1117; border-radius: 10px;
+    padding: 16px 18px; margin: 14px 0;
+    border: 1px solid #30363D;
+    font-size: 13.5px; line-height: 1.6; color: #AAAAAA;
+    position: relative;
+  }
+  .claude-prompt .highlight { color: #00CC66; font-family: var(--mono); }
+  .claude-prompt .copy-prompt-btn {
+    position: absolute; top: 8px; right: 8px;
+    background: #21262D; border: 1px solid #30363D;
+    color: #8B949E; border-radius: 6px;
+    padding: 3px 10px; font-size: 11px; font-family: var(--sans);
+    cursor: pointer; transition: all 0.2s;
+  }
+  .claude-prompt .copy-prompt-btn:hover { background: #30363D; color: #fff; }
+  .claude-prompt .copy-prompt-btn.copied { background: #1a7f37; border-color: #1a7f37; color: #fff; }
+
+  /* ── TEST GRID ── */
+  .test-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .test-box {
+    background: #F8F8F8; border-radius: 10px;
+    padding: 18px; border: 1px solid var(--border);
+  }
+  .test-box h4 { font-size: 14px; font-weight: 700; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+  .test-box p { font-size: 13.5px; color: var(--text-muted); line-height: 1.55; }
+  .success-label { color: var(--green); font-size: 13px; font-weight: 600; margin-top: 10px; }
+
+  /* ── LINKS ── */
+  a.action-link {
+    display: inline-flex; align-items: center; gap: 5px;
+    background: var(--blue); color: white;
+    padding: 5px 12px; border-radius: 20px;
+    font-size: 12.5px; font-weight: 600;
+    text-decoration: none;
+    transition: background 0.2s;
+  }
+  a.action-link:hover { background: var(--blue-dark); }
+  a.text-link { color: var(--blue); text-decoration: underline; }
+  a.text-link:hover { color: var(--blue-dark); }
+
+  /* ── SCREENSHOTS ── */
+  .screenshot-wrap {
+    margin: 18px 0; border: 1px solid var(--border);
+    border-radius: 10px; overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  }
+  .screenshot-wrap img { width: 100%; display: block; }
+  .screenshot-caption { background: #F5F5F5; font-size: 12px; color: #888; padding: 7px 12px; border-top: 1px solid var(--border); }
+  .screenshot-sm { max-width: 340px; }
+
+  /* ── FOOTER ── */
+  .footer {
+    background: var(--surface); border-radius: 12px;
+    padding: 18px 24px; margin-top: 24px;
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 13px; color: #888;
+    box-shadow: var(--shadow);
+  }
+  .footer a { color: var(--blue); text-decoration: none; font-weight: 500; }
+  .footer code { color: #C7254E; font-weight: 600; }
+
+  /* ── DONE ANIMATION ── */
+  @keyframes celebrate { 0%{transform:scale(1)} 50%{transform:scale(1.05)} 100%{transform:scale(1)} }
+  .step-card.done { animation: celebrate 0.4s ease; }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 600px) {
+    .test-grid { grid-template-columns: 1fr; }
+    .header { flex-direction: column; gap: 12px; text-align: center; }
+    .header-right { text-align: center; }
+    .progress-bar { padding: 8px 12px; gap: 4px; }
+    .progress-step .label { display: none; }
+    .step-body { padding: 16px; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- PROGRESS TRACKER -->
+  <div class="progress-bar" id="progressBar">
+    <div class="progress-step active" onclick="scrollToStep(1)" id="prog-1">
+      <div class="dot">1</div><span class="label">Chrome Extension</span>
+    </div>
+    <span class="progress-sep">›</span>
+    <div class="progress-step" onclick="scrollToStep(2)" id="prog-2">
+      <div class="dot">2</div><span class="label">UKG Calendar</span>
+    </div>
+    <span class="progress-sep">›</span>
+    <div class="progress-step" onclick="scrollToStep(3)" id="prog-3">
+      <div class="dot">3</div><span class="label">Skill Config</span>
+    </div>
+    <span class="progress-sep">›</span>
+    <div class="progress-step" onclick="scrollToStep(4)" id="prog-4">
+      <div class="dot">4</div><span class="label">Schedules</span>
+    </div>
+    <span class="progress-sep">›</span>
+    <div class="progress-step" onclick="scrollToStep(5)" id="prog-5">
+      <div class="dot">5</div><span class="label">SMS Setup</span>
+    </div>
+    <span class="progress-sep">›</span>
+    <div class="progress-step" onclick="scrollToStep(6)" id="prog-6">
+      <div class="dot">6</div><span class="label">Test!</span>
+    </div>
+  </div>
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="header-left">
+      <h1>🍱 Spigen Lunch Automation</h1>
+      <p>Set up once — never manually submit the lunch form again</p>
+    </div>
+    <div class="header-right">
+      ⏱ ~15 min setup<br>
+      👋 Questions? Ask James
+    </div>
+  </div>
+
+  <!-- INTRO -->
+  <p style="font-size:15px; margin-bottom:10px;">Once set up, just open Claude and type:</p>
+  <div class="command-box">
+    <code>submit my lunch</code>
+    <button class="copy-btn" onclick="copyText('submit my lunch', this)">Copy</button>
+  </div>
+  <p class="intro-text">Claude checks your time-off calendar, skips any days you're out, fills out the Google Form, and emails you a confirmation. A background script also texts your phone on Fridays if anything was missed.</p>
+
+  <!-- STEP 1 -->
+  <div class="step-card" id="step-1">
+    <div class="step-header" onclick="toggleStep(1)">
+      <div class="step-num" id="num-1">1</div>
+      <div class="step-header-text">
+        <h2>🔌 Install Claude in Chrome</h2>
+        <p>The extension that lets Claude fill out the form for you</p>
+      </div>
+      <button class="step-done-btn" onclick="markDone(event, 1)">Mark done ✓</button>
+      <span class="step-collapse-btn">▾</span>
+    </div>
+    <div class="step-body">
+      <ol class="instructions">
+        <li>Open Chrome and go to the <strong>Chrome Web Store</strong>:
+          <br><br><a href="https://chromewebstore.google.com/detail/claude-ai/.../" class="action-link" target="_blank">↗ Open Chrome Web Store</a>
+          &nbsp; — search for <strong>Claude</strong>
+        </li>
+        <li>Click <strong>Add to Chrome</strong> and confirm.</li>
+        <li>Click the Claude icon in your toolbar and sign in with your <strong>Spigen account</strong>
+          (<code style="background:#F0F0F0;padding:2px 6px;border-radius:4px;color:#C7254E;font-family:var(--mono)">@spigen.com</code>).
+        </li>
+      </ol>
+      <div class="note">⚠️ Sign in with your <strong>Spigen account</strong>, not your personal Gmail. Claude needs access to your Spigen calendar and email to work correctly.</div>
+    </div>
+  </div>
+
+  <!-- STEP 2 -->
+  <div class="step-card" id="step-2">
+    <div class="step-header" onclick="toggleStep(2)">
+      <div class="step-num" id="num-2">2</div>
+      <div class="step-header-text">
+        <h2>📅 Get Your Time-Off Calendar URL from UKG</h2>
+        <p>This tells Claude which days you're off so it skips those days automatically</p>
+      </div>
+      <button class="step-done-btn" onclick="markDone(event, 2)">Mark done ✓</button>
+      <span class="step-collapse-btn">▾</span>
+    </div>
+    <div class="step-body">
+      <ol class="instructions">
+        <li>Log into UKG &nbsp;<a href="https://www.ukg.com" class="action-link" target="_blank">↗ Open UKG</a>&nbsp; and click <strong>My Time</strong> in the left sidebar.</li>
+        <li>Under <strong>Time Off</strong>, click <strong>Calendar</strong>.</li>
+        <li>Click the <strong>Sync Calendar</strong> button in the top right corner.</li>
+      </ol>
+
+      <div class="screenshot-wrap" style="margin-top:18px;">
+        <div style="background:#e8e8e8;padding:60px 20px;text-align:center;color:#999;font-size:14px;font-style:italic;">
+          UKG Screenshot: My Time → Time Off → Calendar → Sync Calendar (top right)
+        </div>
+        <div class="screenshot-caption">UKG: My Time → Time Off → Calendar → click "Sync Calendar" (top right)</div>
+      </div>
+
+      <ol class="instructions" style="counter-reset: inst 3; margin-top:16px;">
+        <li>A popup appears — click <strong>Copy</strong> to copy the calendar URL.</li>
+      </ol>
+
+      <div class="screenshot-wrap screenshot-sm" style="margin-top:12px;">
+        <div style="background:#e8e8e8;padding:40px 20px;text-align:center;color:#999;font-size:13px;font-style:italic;">
+          "Subscribe to this Calendar" popup — click Copy
+        </div>
+        <div class="screenshot-caption">Click Copy — you'll paste this URL in the next step</div>
+      </div>
+
+      <div class="note note-blue" style="margin-top:16px;">💡 Keep this URL handy — you'll paste it into the skill config in Step 3.</div>
+
+      <div style="margin-top:16px;">
+        <label style="font-size:13px;font-weight:600;color:var(--text-muted);display:block;margin-bottom:6px;">Paste your UKG calendar URL here to save it for Step 3:</label>
+        <input type="text" class="editable-field" id="ukg-url" placeholder="https://calendar.google.com/..." style="width:100%;max-width:500px;"
+          oninput="saveField('ukg-url')" />
+        <p class="editable-hint" style="margin-top:5px;">✎ Stored locally in this browser — just for your convenience</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 3 -->
+  <div class="step-card" id="step-3">
+    <div class="step-header" onclick="toggleStep(3)">
+      <div class="step-num" id="num-3">3</div>
+      <div class="step-header-text">
+        <h2>🧠 Install &amp; Configure the Skill</h2>
+        <p>Get the .skill file from James first</p>
+      </div>
+      <button class="step-done-btn" onclick="markDone(event, 3)">Mark done ✓</button>
+      <span class="step-collapse-btn">▾</span>
+    </div>
+    <div class="step-body">
+      <ol class="instructions">
+        <li>Open <strong>Cowork → Settings → Skills → Install Skill</strong>. Drop in the <strong>.skill file</strong> James sends you.</li>
+        <li>Open the skill and update these 5 lines at the top with your info:</li>
+      </ol>
+
+      <div class="code-block">
+        <div class="line">
+          <span class="code-key">USER_EMAIL:</span>
+          <input type="text" class="editable-field" id="f-email" placeholder="yourname@spigen.com" oninput="saveField('f-email');updatePrompts()" />
+        </div>
+        <div class="line">
+          <span class="code-key">USER_NAME:</span>
+          <input type="text" class="editable-field" id="f-name" placeholder="Your First Name" oninput="saveField('f-name');updatePrompts()" />
+        </div>
+        <div class="line">
+          <span class="code-key">TIME_OFF_CALENDAR:</span>
+          <input type="text" class="editable-field" id="f-calendar" placeholder="← paste URL from Step 2" oninput="saveField('f-calendar');updatePrompts()" style="min-width:260px;" />
+        </div>
+        <div class="line">
+          <span class="code-key">PHONE_NUMBER:</span>
+          <input type="text" class="editable-field" id="f-phone" placeholder="10-digit, e.g. 3104150408" oninput="saveField('f-phone');updatePrompts()" />
+        </div>
+        <div class="line">
+          <span class="code-key">CARRIER_GATEWAY:</span>
+          <input type="text" class="editable-field" id="f-carrier" placeholder="← select from table below" readonly oninput="saveField('f-carrier')" />
+        </div>
+      </div>
+
+      <p style="font-size:13.5px; color:var(--text-muted); margin-bottom:10px; margin-top:16px;">📱 Click your carrier to auto-fill the gateway:</p>
+      <table>
+        <tr><th>Carrier</th><th>Gateway</th><th>Full address format</th></tr>
+        <tr class="carrier-row" onclick="selectCarrier('vtext.com')">
+          <td>Verizon <span class="carrier-select-badge" id="badge-vtext.com">✓ Selected</span></td>
+          <td class="mono">vtext.com</td>
+          <td class="mono">PHONENUMBER@vtext.com</td>
+        </tr>
+        <tr class="carrier-row" onclick="selectCarrier('tmomail.net')">
+          <td>T-Mobile <span class="carrier-select-badge" id="badge-tmomail.net">✓ Selected</span></td>
+          <td class="mono">tmomail.net</td>
+          <td class="mono">PHONENUMBER@tmomail.net</td>
+        </tr>
+        <tr class="carrier-row" onclick="selectCarrier('txt.att.net')">
+          <td>AT&amp;T <span class="carrier-select-badge" id="badge-txt.att.net">✓ Selected</span></td>
+          <td class="mono">txt.att.net</td>
+          <td class="mono">PHONENUMBER@txt.att.net</td>
+        </tr>
+        <tr class="carrier-row" onclick="selectCarrier('msg.fi.google.com')">
+          <td>Google Fi <span class="carrier-select-badge" id="badge-msg.fi.google.com">✓ Selected</span></td>
+          <td class="mono">msg.fi.google.com</td>
+          <td class="mono">PHONENUMBER@msg.fi.google.com</td>
+        </tr>
+        <tr class="carrier-row" onclick="selectCarrier('vtext.com', 'visible')">
+          <td>Visible <span class="carrier-select-badge" id="badge-visible">✓ Selected</span></td>
+          <td class="mono">vtext.com</td>
+          <td class="mono">PHONENUMBER@vtext.com</td>
+        </tr>
+        <tr class="carrier-row" onclick="selectCarrier('email.uscc.net')">
+          <td>US Cellular <span class="carrier-select-badge" id="badge-email.uscc.net">✓ Selected</span></td>
+          <td class="mono">email.uscc.net</td>
+          <td class="mono">PHONENUMBER@email.uscc.net</td>
+        </tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- STEP 4 -->
+  <div class="step-card" id="step-4">
+    <div class="step-header" onclick="toggleStep(4)">
+      <div class="step-num" id="num-4">4</div>
+      <div class="step-header-text">
+        <h2>📅 Set Up Cowork Schedules</h2>
+        <p>3 tasks — all using the same prompt: submit my lunch</p>
+      </div>
+      <button class="step-done-btn" onclick="markDone(event, 4)">Mark done ✓</button>
+      <span class="step-collapse-btn">▾</span>
+    </div>
+    <div class="step-body">
+      <p style="font-size:13.5px; color:var(--text-muted); margin-bottom:14px;">In Cowork: <strong>Scheduled Tasks → + New task</strong> → enter the name, set the prompt to
+        <code style="background:#F0F0F0; padding:2px 6px; border-radius:4px; color:#C7254E; font-family:var(--mono);">submit my lunch</code>,
+        set the schedule → <strong>Save</strong>. Repeat for all 3:
+      </p>
+      <table class="sched-table">
+        <tr><th>Task Name</th><th>Schedule</th><th>Prompt</th></tr>
+        <tr>
+          <td>Lunch submit dynamic am</td>
+          <td>Weekdays, 9:30 AM PT</td>
+          <td class="sched-prompt">
+            submit my lunch
+            <button class="copy-btn" style="position:static;margin-left:8px;" onclick="copyText('submit my lunch', this)">Copy</button>
+          </td>
+        </tr>
+        <tr>
+          <td>Lunch submit dynamic pm</td>
+          <td>Weekdays, 2:47 PM PT</td>
+          <td class="sched-prompt">
+            submit my lunch
+            <button class="copy-btn" style="position:static;margin-left:8px;" onclick="copyText('submit my lunch', this)">Copy</button>
+          </td>
+        </tr>
+        <tr>
+          <td>Lunch submit friday</td>
+          <td>Fridays, 10:00 AM PT</td>
+          <td class="sched-prompt">
+            submit my lunch
+            <button class="copy-btn" style="position:static;margin-left:8px;" onclick="copyText('submit my lunch', this)">Copy</button>
+          </td>
+        </tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- STEP 5 -->
+  <div class="step-card" id="step-5">
+    <div class="step-header" onclick="toggleStep(5)">
+      <div class="step-num" id="num-5">5</div>
+      <div class="step-header-text">
+        <h2>📨 SMS Reminder Setup</h2>
+        <p>Texts your phone on Fridays if lunch wasn't submitted — even if your computer is off</p>
+      </div>
+      <button class="step-done-btn" onclick="markDone(event, 5)">Mark done ✓</button>
+      <span class="step-collapse-btn">▾</span>
+    </div>
+    <div class="step-body">
+      <p style="font-size:13.5px; color:var(--text-muted); margin-bottom:16px;">Two quick scripts work together. <strong>Part A</strong> runs on your Spigen account and checks if lunch was submitted. <strong>Part B</strong> runs on your personal Gmail and relays the alert to your phone as a text.</p>
+
+      <p style="font-weight:700; color:var(--blue); margin-bottom:10px; font-size:14px;">Part A — Spigen Google account (<code style="color:#C7254E;font-family:var(--mono)">@spigen.com</code>)</p>
+      <ol class="instructions">
+        <li>Go to <a href="https://script.google.com" class="action-link" target="_blank">↗ script.google.com</a> (signed in as your Spigen account) → <strong>+ New project</strong> → name it <strong>"Lunch Automation"</strong>.</li>
+        <li>Open <strong>Claude in Chrome</strong> and send this message — Claude will paste the code, save it, and set the trigger automatically:</li>
+      </ol>
+
+      <div class="claude-prompt" id="prompt-a">
+        Go to my Apps Script Lunch Automation project, paste in the <span class="highlight">checkAndRemind</span> code from the SKILL.md file, replace YOUR_PERSONAL_EMAIL with <span class="highlight" id="pa-email">your.personal@gmail.com</span>, save it, and set a weekly trigger every <span class="highlight">Friday 11am–12pm</span>.
+        <button class="copy-prompt-btn" onclick="copyPromptA(this)">Copy</button>
+      </div>
+
+      <p style="font-weight:700; color:var(--blue); margin-bottom:10px; margin-top:20px; font-size:14px;">Part B — Personal Gmail account</p>
+      <ol class="instructions">
+        <li>Open a new tab, go to <a href="https://script.google.com" class="action-link" target="_blank">↗ script.google.com</a> signed in as your <strong>personal Gmail</strong> → <strong>+ New project</strong> → name it <strong>"ForwardLunchReminder"</strong>.</li>
+        <li>Open <strong>Claude in Chrome</strong> and send this message:</li>
+      </ol>
+
+      <div class="claude-prompt" id="prompt-b">
+        Go to my Apps Script ForwardLunchReminder project, paste in the <span class="highlight">forwardLunchReminder</span> code from the SKILL.md file, replace PHONE_NUMBER with <span class="highlight" id="pb-phone">YOURNUMBER</span> and CARRIER_GATEWAY with <span class="highlight" id="pb-carrier">YOURGATEWAY</span>, save it, and set a trigger every <span class="highlight">10 minutes</span>.
+        <button class="copy-prompt-btn" onclick="copyPromptB(this)">Copy</button>
+      </div>
+
+      <div style="margin-top:16px;">
+        <label style="font-size:13px;font-weight:600;color:var(--text-muted);display:block;margin-bottom:6px;">Your personal Gmail (for Part A prompt):</label>
+        <input type="text" class="editable-field" id="f-personal-email" placeholder="your.personal@gmail.com" oninput="saveField('f-personal-email');updatePrompts()" />
+      </div>
+
+      <div class="note note-blue" style="margin-top:16px;">💡 Why two scripts? Carriers like Verizon block texts sent from corporate Google Workspace email. Your personal Gmail can send them just fine — so we relay through it.</div>
+    </div>
+  </div>
+
+  <!-- STEP 6 -->
+  <div class="step-card" id="step-6">
+    <div class="step-header" onclick="toggleStep(6)">
+      <div class="step-num" id="num-6">6</div>
+      <div class="step-header-text">
+        <h2>✅ Test It!</h2>
+        <p>Quick checks to confirm everything is working</p>
+      </div>
+      <button class="step-done-btn" onclick="markDone(event, 6)">Mark done ✓</button>
+      <span class="step-collapse-btn">▾</span>
+    </div>
+    <div class="step-body">
+      <div class="test-grid">
+        <div class="test-box">
+          <h4>🧪 Test the skill manually</h4>
+          <p>Open Claude in Chrome and type:</p>
+          <div class="command-box" style="margin:10px 0;padding:12px 16px;">
+            <code style="font-size:15px;">submit my lunch</code>
+            <button class="copy-btn" onclick="copyText('submit my lunch', this)">Copy</button>
+          </div>
+          <p class="success-label">✓ Claude fills out the form and emails you a confirmation</p>
+        </div>
+        <div class="test-box">
+          <h4>📲 Test the SMS reminder</h4>
+          <p>In your Spigen Apps Script → <strong>Run checkAndRemind manually</strong>. Within 10 minutes, your personal Gmail's script should forward a text to your phone.</p>
+          <p class="success-label">✓ You receive a text message</p>
+        </div>
+      </div>
+
+      <div class="note note-green" style="margin-top:20px;">
+        🎉 All done! The automation will now run on its own every weekday. You only need to open Claude to submit manually if you want to.
+      </div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="footer">
+    <div>Questions? Message James or ask <code>Claude</code>.</div>
+    <div style="font-size:12px; color:#aaa;">Spigen Lunch Automation v2 · <span id="completion-status">0/6 steps done</span></div>
+  </div>
+
+</div>
+
+<script>
+  // ── STATE ──
+  const state = {
+    done: JSON.parse(localStorage.getItem('lunch-done') || '[]'),
+    fields: JSON.parse(localStorage.getItem('lunch-fields') || '{}')
+  };
+
+  // ── INIT ──
+  window.onload = function() {
+    // Restore fields
+    Object.entries(state.fields).forEach(([id, val]) => {
+      const el = document.getElementById(id);
+      if (el) { el.value = val; if (val) el.classList.add('filled'); }
+    });
+    // Restore done steps
+    state.done.forEach(n => applyDone(n, false));
+    updateStatus();
+    updatePrompts();
+    syncCalendarField();
+  };
+
+  // ── FIELD SYNC ──
+  function syncCalendarField() {
+    const ukgVal = state.fields['ukg-url'] || '';
+    const calEl = document.getElementById('f-calendar');
+    if (calEl && !calEl.value && ukgVal) {
+      calEl.value = ukgVal;
+      calEl.classList.add('filled');
+      state.fields['f-calendar'] = ukgVal;
+      localStorage.setItem('lunch-fields', JSON.stringify(state.fields));
+    }
+  }
+
+  // ── SAVE FIELD ──
+  function saveField(id) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const val = el.value.trim();
+    state.fields[id] = val;
+    localStorage.setItem('lunch-fields', JSON.stringify(state.fields));
+    el.classList.toggle('filled', val.length > 0);
+    // Sync ukg-url to f-calendar
+    if (id === 'ukg-url' && val) {
+      const calEl = document.getElementById('f-calendar');
+      if (calEl && !calEl.value) {
+        calEl.value = val;
+        calEl.classList.add('filled');
+        state.fields['f-calendar'] = val;
+        localStorage.setItem('lunch-fields', JSON.stringify(state.fields));
+      }
+    }
+  }
+
+  // ── UPDATE PROMPTS ──
+  function updatePrompts() {
+    const phone = state.fields['f-phone'] || 'YOURNUMBER';
+    const carrier = state.fields['f-carrier'] || 'YOURGATEWAY';
+    const personal = state.fields['f-personal-email'] || 'your.personal@gmail.com';
+
+    const paEmail = document.getElementById('pa-email');
+    const pbPhone = document.getElementById('pb-phone');
+    const pbCarrier = document.getElementById('pb-carrier');
+
+    if (paEmail) paEmail.textContent = personal;
+    if (pbPhone) pbPhone.textContent = phone;
+    if (pbCarrier) pbCarrier.textContent = carrier;
+  }
+
+  // ── CARRIER SELECT ──
+  function selectCarrier(gateway, id) {
+    // Clear all selections
+    document.querySelectorAll('.carrier-row').forEach(r => r.classList.remove('selected'));
+    document.querySelectorAll('.carrier-select-badge').forEach(b => b.style.opacity = '0');
+    
+    const badgeId = id || gateway;
+    const badge = document.getElementById('badge-' + badgeId);
+    if (badge) { badge.style.opacity = '1'; badge.closest('.carrier-row').classList.add('selected'); }
+
+    const el = document.getElementById('f-carrier');
+    if (el) {
+      el.value = gateway;
+      el.classList.add('filled');
+      state.fields['f-carrier'] = gateway;
+      localStorage.setItem('lunch-fields', JSON.stringify(state.fields));
+      updatePrompts();
+    }
+  }
+
+  // ── TOGGLE COLLAPSE ──
+  function toggleStep(n) {
+    const card = document.getElementById('step-' + n);
+    card.classList.toggle('collapsed');
+  }
+
+  // ── MARK DONE ──
+  function markDone(e, n) {
+    e.stopPropagation();
+    const isDone = state.done.includes(n);
+    if (isDone) {
+      state.done = state.done.filter(x => x !== n);
+      applyDone(n, false);
+    } else {
+      state.done.push(n);
+      applyDone(n, true);
+    }
+    localStorage.setItem('lunch-done', JSON.stringify(state.done));
+    updateStatus();
+  }
+
+  function applyDone(n, done) {
+    const card = document.getElementById('step-' + n);
+    const prog = document.getElementById('prog-' + n);
+    const num = document.getElementById('num-' + n);
+    const btn = card.querySelector('.step-done-btn');
+
+    if (done) {
+      card.classList.add('done');
+      prog.classList.add('done');
+      prog.classList.remove('active');
+      if (btn) btn.textContent = '✓ Done';
+      // Auto-collapse when marked done
+      card.classList.add('collapsed');
+    } else {
+      card.classList.remove('done');
+      prog.classList.remove('done');
+      if (btn) btn.textContent = 'Mark done ✓';
+      card.classList.remove('collapsed');
+    }
+  }
+
+  // ── STATUS ──
+  function updateStatus() {
+    const el = document.getElementById('completion-status');
+    if (el) el.textContent = state.done.length + '/6 steps done';
+  }
+
+  // ── SCROLL TO STEP ──
+  function scrollToStep(n) {
+    const el = document.getElementById('step-' + n);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      // Expand if collapsed
+      el.classList.remove('collapsed');
+    }
+  }
+
+  // ── COPY TEXT ──
+  function copyText(text, btn) {
+    navigator.clipboard.writeText(text).then(() => {
+      const orig = btn.textContent;
+      btn.textContent = 'Copied!';
+      btn.classList.add('copied');
+      setTimeout(() => { btn.textContent = orig; btn.classList.remove('copied'); }, 1800);
+    });
+  }
+
+  // ── COPY PROMPTS ──
+  function copyPromptA(btn) {
+    const personal = state.fields['f-personal-email'] || 'your.personal@gmail.com';
+    const text = `Go to my Apps Script Lunch Automation project, paste in the checkAndRemind code from the SKILL.md file, replace YOUR_PERSONAL_EMAIL with ${personal}, save it, and set a weekly trigger every Friday 11am–12pm.`;
+    copyText(text, btn);
+  }
+
+  function copyPromptB(btn) {
+    const phone = state.fields['f-phone'] || 'YOURNUMBER';
+    const carrier = state.fields['f-carrier'] || 'YOURGATEWAY';
+    const text = `Go to my Apps Script ForwardLunchReminder project, paste in the forwardLunchReminder code from the SKILL.md file, replace PHONE_NUMBER with ${phone} and CARRIER_GATEWAY with ${carrier}, save it, and set a trigger every 10 minutes.`;
+    copyText(text, btn);
+  }
+</script>
+</body>
+</html>
